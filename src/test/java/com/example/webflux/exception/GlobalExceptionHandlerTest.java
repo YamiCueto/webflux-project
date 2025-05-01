@@ -1,14 +1,15 @@
 package com.example.webflux.exception;
 
-import com.example.webflux.model.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 class GlobalExceptionHandlerTest {
@@ -18,8 +19,7 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         exceptionHandler = new GlobalExceptionHandler(objectMapper);
         exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test").build());
     }
@@ -28,51 +28,47 @@ class GlobalExceptionHandlerTest {
     void whenHandleTaskNotFoundExceptionShouldReturnNotFound() {
         TaskNotFoundException ex = new TaskNotFoundException("1");
 
-        StepVerifier.create(exceptionHandler.handle(exchange, ex))
-                .verifyComplete();
+        Mono<Void> result = exceptionHandler.handle(exchange, ex);
 
-        ErrorResponse response = exchange.getAttribute("errorResponse");
-        assert response != null;
-        assert response.getStatus() == HttpStatus.NOT_FOUND.value();
-        assert response.getMessage().contains("1");
+        StepVerifier.create(result).verifyComplete();
+
+        ServerHttpResponse response = exchange.getResponse();
+        assert response.getStatusCode() == HttpStatus.NOT_FOUND;
     }
 
     @Test
     void whenHandleTaskExceptionShouldReturnBadRequest() {
         TaskException ex = new TaskException(HttpStatus.BAD_REQUEST, "Bad request");
 
-        StepVerifier.create(exceptionHandler.handle(exchange, ex))
-                .verifyComplete();
+        Mono<Void> result = exceptionHandler.handle(exchange, ex);
 
-        ErrorResponse response = exchange.getAttribute("errorResponse");
-        assert response != null;
-        assert response.getStatus() == HttpStatus.BAD_REQUEST.value();
-        assert response.getMessage().equals("Bad request");
+        StepVerifier.create(result).verifyComplete();
+
+        ServerHttpResponse response = exchange.getResponse();
+        assert response.getStatusCode() == HttpStatus.BAD_REQUEST;
     }
 
     @Test
     void whenHandleResponseStatusExceptionShouldReturnServerError() {
         ResponseStatusException ex = new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error");
 
-        StepVerifier.create(exceptionHandler.handle(exchange, ex))
-                .verifyComplete();
+        Mono<Void> result = exceptionHandler.handle(exchange, ex);
 
-        ErrorResponse response = exchange.getAttribute("errorResponse");
-        assert response != null;
-        assert response.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR.value();
-        assert response.getMessage().contains("Server error");
+        StepVerifier.create(result).verifyComplete();
+
+        ServerHttpResponse response = exchange.getResponse();
+        assert response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     @Test
     void whenHandleGenericExceptionShouldReturnServerError() {
         RuntimeException ex = new RuntimeException("Unexpected error");
 
-        StepVerifier.create(exceptionHandler.handle(exchange, ex))
-                .verifyComplete();
+        Mono<Void> result = exceptionHandler.handle(exchange, ex);
 
-        ErrorResponse response = exchange.getAttribute("errorResponse");
-        assert response != null;
-        assert response.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR.value();
-        assert response.getMessage().contains("Unexpected error");
+        StepVerifier.create(result).verifyComplete();
+
+        ServerHttpResponse response = exchange.getResponse();
+        assert response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

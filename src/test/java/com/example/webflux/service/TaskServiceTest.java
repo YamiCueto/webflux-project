@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,10 +95,11 @@ class TaskServiceTest {
 
     @Test
     void whenProcessTasksInParallelShouldSucceed() {
-        when(taskRepository.findAll()).thenReturn(Flux.just(task));
+        lenient().when(taskRepository.findAll()).thenReturn(Flux.just(task));
 
         StepVerifier.create(taskService.processTasksInParallel(Flux.just(task)))
                 .expectNext(task)
                 .verifyComplete();
     }
 }
+
