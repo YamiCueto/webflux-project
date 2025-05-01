@@ -17,6 +17,12 @@ import reactor.core.publisher.Mono;
 public class TaskController {
     private final TaskService taskService;
 
+    @Operation(summary = "Get all tasks", description = "Retrieves all tasks")
+    @GetMapping
+    public Flux<Task> getAllTasks() {
+        return taskService.getAllTasks();
+    }
+
     @Operation(summary = "Create a new task", description = "Creates a new task and returns it")
     @PostMapping
     public Mono<Task> createTask(@RequestBody Task task) {

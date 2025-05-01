@@ -4,7 +4,6 @@ import com.example.webflux.repository.TaskRepository;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 @Component
 public class TaskHealthIndicator implements HealthIndicator {
